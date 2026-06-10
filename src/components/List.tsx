@@ -13,38 +13,41 @@ export default function List() {
   const [isFurusato, setIsFurusato] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('WAR');
 
-  // ハッシュルーター仕様: URLから状態を同期
+  // sessionStorageから状態を復元
   useEffect(() => {
-    const queryString = window.location.hash.split('?')[1] || '';
-    const params = new URLSearchParams(queryString);
-    setKeyword(params.get('q') || '');
-    setIsFurusato(params.get('furusato') === '1');
-    const sort = params.get('sort') as SortKey;
-    if (sort && ['WAR', 'ISO', 'FIP'].includes(sort)) {
-      setSortKey(sort);
+    const k = sessionStorage.getItem('scoutKeyword') || '';
+    const f = sessionStorage.getItem('scoutFurusato') === '1';
+    const s = (sessionStorage.getItem('scoutSort') as SortKey) || 'WAR';
+    
+    if (!k) {
+      setLocation('/'); // キーワードが無ければHomeへ
+      return;
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    setKeyword(k);
+    setIsFurusato(f);
+    setSortKey(s);
+  }, [setLocation]);
 
   const { data: apiData, isLoading, error } = useScoutSearch(keyword, isFurusato);
 
+  // FIPは低い方が優秀なので昇順、それ以外は降順でソート
   const sortedData = useMemo(() => {
     if (!apiData) return [];
-    return [...apiData].sort((a, b) => parseFloat(b.metrics[sortKey].value) - parseFloat(a.metrics[sortKey].value));
+    return [...apiData].sort((a, b) => {
+      const aVal = parseFloat(a.metrics[sortKey].value);
+      const bVal = parseFloat(b.metrics[sortKey].value);
+      if (sortKey === 'FIP') return aVal - bVal; 
+      return bVal - aVal;
+    });
   }, [apiData, sortKey]);
 
   const handleSortChange = (newSort: SortKey) => {
-    const queryString = window.location.hash.split('?')[1] || '';
-    const params = new URLSearchParams(queryString);
-    params.set('sort', newSort);
-    setLocation(`/list?${params.toString()}`);
+    sessionStorage.setItem('scoutSort', newSort);
     setSortKey(newSort);
   };
 
   const handleCardClick = (item: RakScoutItem) => {
-    // 選択したアイテムと、現在の検索クエリ(戻るボタン用)を保存
     sessionStorage.setItem('rakScoutSelectedItem', JSON.stringify(item));
-    const queryString = window.location.hash.split('?')[1] || '';
-    sessionStorage.setItem('rakScoutSearchQuery', queryString);
   };
 
   return (
@@ -108,7 +111,7 @@ export default function List() {
         {!isLoading && sortedData.map((item) => (
           <Link 
             key={item.id}
-            href={`/detail?id=${encodeURIComponent(item.id)}`}
+            href={`/detail`}
             onClick={() => handleCardClick(item)}
             className="block bg-white border border-stone-200 rounded-[2.5rem] p-6 shadow-sm active:scale-[0.98] transition-all focus:outline-none focus:ring-4 focus:ring-stone-400"
             aria-label={`${item.name}の詳細を見る。価格 ${item.price}円`}

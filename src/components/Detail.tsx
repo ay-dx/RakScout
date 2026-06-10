@@ -17,9 +17,8 @@ export default function Detail() {
   }, [setLocation]);
 
   const handleBack = () => {
-    // リスト画面に戻る際、保存しておいた検索クエリを復元する
-    const prevQuery = sessionStorage.getItem('rakScoutSearchQuery') || '';
-    setLocation(`/list?${prevQuery}`);
+    // 状態はsessionStorageにあるので、単に/listへ戻るだけ
+    setLocation('/list');
   };
 
   if (!item) return null;
@@ -35,7 +34,6 @@ export default function Detail() {
       </button>
 
       <div className="flex-1 flex flex-col items-center">
-        {/* レアカード外枠 (静的・3D排除版) */}
         <div className="w-full relative shadow-[0_30px_60px_rgba(0,0,0,0.12)] p-1 bg-[linear-gradient(135deg,#ffffff_0%,#e7e5e4_20%,#a8a29e_50%,#e7e5e4_80%,#ffffff_100%)]" style={{ clipPath: 'polygon(4% 0%, 96% 0%, 100% 100%, 0% 100%)' }}>
           
           <div className="w-full pt-8 pb-10 px-6 bg-carbon relative" style={{ clipPath: 'polygon(4% 0%, 96% 0%, 100% 100%, 0% 100%)' }}>
@@ -60,14 +58,12 @@ export default function Detail() {
               <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-xl" />
             </div>
 
-            {/* 指標バー */}
             <div className="space-y-4 mb-10 relative z-10">
               <MetricBar label="WAR" value={item.metrics.WAR.value} pct={item.metrics.WAR.pct} colorClass="bg-gradient-to-r from-red-900 to-red-500" />
               <MetricBar label="ISO" value={item.metrics.ISO.value} pct={item.metrics.ISO.pct} colorClass="bg-gradient-to-r from-blue-900 to-blue-500" />
               <MetricBar label="FIP" value={item.metrics.FIP.value} pct={item.metrics.FIP.pct} colorClass="bg-gradient-to-r from-green-900 to-green-500" />
             </div>
 
-            {/* スカウティングレポート */}
             <div className="relative mb-10 z-10">
               <div className="flex items-center gap-2 mb-2 ml-1">
                 <div className="w-1.5 h-4 bg-stone-400"></div>

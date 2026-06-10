@@ -4,17 +4,19 @@ import Footer from './Footer';
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const [keyword, setKeyword] = useState('');
-  const [isFurusato, setIsFurusato] = useState(false);
   const searchInputId = useId();
+
+  // sessionStorageから前回の状態を復元（戻るボタン対応）
+  const [keyword, setKeyword] = useState(() => sessionStorage.getItem('scoutKeyword') || '');
+  const [isFurusato, setIsFurusato] = useState(() => sessionStorage.getItem('scoutFurusato') === '1');
 
   const handleSearch = () => {
     if (!keyword.trim()) return;
-    const params = new URLSearchParams();
-    params.set('q', keyword);
-    if (isFurusato) params.set('furusato', '1');
-    params.set('sort', 'WAR');
-    setLocation(`/list?${params.toString()}`);
+    // 状態をsessionStorageに保存し、URLはクリーンなまま遷移
+    sessionStorage.setItem('scoutKeyword', keyword);
+    sessionStorage.setItem('scoutFurusato', isFurusato ? '1' : '0');
+    sessionStorage.setItem('scoutSort', 'WAR'); // デフォルトソート
+    setLocation('/list');
   };
 
   return (
