@@ -1,99 +1,64 @@
-import { useEffect, useState, useMemo, useId } from 'react';
-import { useLocation, Link } from 'wouter';
+import { useMemo } from 'react';
+import { useLocation, useSearch, Link } from 'wouter';
 import { useScoutSearch } from '../hooks/useScoutSearch';
-import { RakScoutItem } from '../types';
+import { RakScoutItem, SortKey } from '../types';
 
-type SortKey = 'WAR' | 'ISO' | 'FIP';
+const TABS: SortKey[] = ['WAR', 'ISO', 'FIP'];
 
 export default function List() {
   const [, setLocation] = useLocation();
-  const searchInputId = useId();
-  
-  const [keyword, setKeyword] = useState('');
-  const [isFurusato, setIsFurusato] = useState(false);
-  const [sortKey, setSortKey] = useState<SortKey>('WAR');
+  const search = useSearch();           // ← URLから常時読む（useEffect不要）
+  const params = new URLSearchParams(search);
 
-  // sessionStorageから状態を復元
-  useEffect(() => {
-    const k = sessionStorage.getItem('scoutKeyword') || '';
-    const f = sessionStorage.getItem('scoutFurusato') === '1';
-    const s = (sessionStorage.getItem('scoutSort') as SortKey) || 'WAR';
-    
-    if (!k) {
-      setLocation('/'); // キーワードが無ければHomeへ
-      return;
-    }
-    setKeyword(k);
-    setIsFurusato(f);
-    setSortKey(s);
-  }, [setLocation]);
+  const keyword = params.get('q') || '';
+  const isFurusato = params.get('furusato') === '1';
+  const sortKey = (params.get('sort') as SortKey) || 'WAR';
 
-  const { data: apiData, isLoading, error } = useScoutSearch(keyword, isFurusato);
+  const { data, isLoading, error } = useScoutSearch(keyword, isFurusato);
 
-  // FIPは低い方が優秀なので昇順、それ以外は降順でソート
-  const sortedData = useMemo(() => {
-    if (!apiData) return [];
-    return [...apiData].sort((a, b) => {
-      const aVal = parseFloat(a.metrics[sortKey].value);
-      const bVal = parseFloat(b.metrics[sortKey].value);
-      if (sortKey === 'FIP') return aVal - bVal; 
-      return bVal - aVal;
-    });
-  }, [apiData, sortKey]);
+  const sorted = useMemo(() => {
+    if (!data) return [];
+    return [...data].sort((a, b) => parseFloat(b.metrics[sortKey].value) - parseFloat(a.metrics[sortKey].value));
+  }, [data, sortKey]);
 
-  const handleSortChange = (newSort: SortKey) => {
-    sessionStorage.setItem('scoutSort', newSort);
-    setSortKey(newSort);
+  const changeSort = (tab: SortKey) => {
+    const next = new URLSearchParams(search);
+    next.set('sort', tab);
+    setLocation(`/list?${next}`);       // ← URL書き換えだけ、state不要
   };
 
-  const handleCardClick = (item: RakScoutItem) => {
-    sessionStorage.setItem('rakScoutSelectedItem', JSON.stringify(item));
+  const buildDetailUrl = (id: string) => {
+    const next = new URLSearchParams(search);
+    next.set('id', id);
+    return `/detail?${next}`;           // ← 検索条件を引き継ぐ
   };
 
   return (
     <div className="flex flex-col h-full bg-cream">
-      <header className="p-5 bg-white/80 backdrop-blur-md border-b-2 border-stone-200 shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.06)] relative">
+      <header className="p-5 bg-white/80 backdrop-blur-md border-b-2 border-stone-200 shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
         <div className="flex items-center gap-3 mb-5">
-          <button 
-            onClick={() => setLocation('/')} 
-            className="p-3 bg-stone-100 rounded-full border border-stone-200 active:scale-90 transition-transform text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-400"
-            aria-label="ホームに戻る"
-          >
+          <button onClick={() => setLocation('/')} aria-label="ホームに戻る"
+            className="p-3 bg-stone-100 rounded-full border border-stone-200 active:scale-90 transition-transform text-stone-600">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg>
           </button>
           
-          <div className="relative flex items-center w-full bg-white/80 border border-stone-200 rounded-xl focus-within:border-stone-400 transition-all">
-            <label htmlFor={searchInputId} className="absolute left-3 text-stone-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </label>
-            <input 
-              id={searchInputId}
-              type="search" 
-              value={keyword}
-              readOnly
-              onClick={() => setLocation('/')}
-              className="w-full pl-10 pr-4 py-3 bg-transparent text-lg font-black outline-none text-stone-800 cursor-pointer" 
-            />
-          </div>
+          <button onClick={() => setLocation('/')} className="flex-1 text-left bg-white/80 border border-stone-200 rounded-xl px-4 py-3 text-stone-800 font-black">
+            {keyword || '検索キーワード...'}
+          </button>
         </div>
 
-        <div className="flex gap-1 h-12">
-          {(['WAR', 'ISO', 'FIP'] as SortKey[]).map((tab) => {
-            const isActive = sortKey === tab;
-            let activeColor = 'bg-stone-100 text-stone-400';
-            if (isActive) {
-               if (tab === 'WAR') activeColor = 'bg-red-500 text-white shadow-[0_4px_10px_rgba(239,68,68,0.4)]';
-               if (tab === 'ISO') activeColor = 'bg-blue-500 text-white shadow-[0_4px_10px_rgba(59,130,246,0.4)]';
-               if (tab === 'FIP') activeColor = 'bg-green-500 text-white shadow-[0_4px_10px_rgba(34,197,94,0.4)]';
-            }
+        <div className="flex gap-1 h-12" role="tablist">
+          {TABS.map(tab => {
+            const active = sortKey === tab;
+            const color = active
+              ? tab === 'WAR' ? 'bg-red-500 shadow-[0_4px_10px_rgba(239,68,68,0.4)]'
+              : tab === 'ISO' ? 'bg-blue-500 shadow-[0_4px_10px_rgba(59,130,246,0.4)]'
+              : 'bg-green-500 shadow-[0_4px_10px_rgba(34,197,94,0.4)]'
+              : 'bg-stone-100 text-stone-400';
             return (
-              <button
-                key={tab}
-                onClick={() => handleSortChange(tab)}
-                aria-pressed={isActive}
-                className={`flex-1 font-black italic text-[14px] tracking-widest transition-all focus:outline-none focus:ring-2 focus:ring-stone-400 ${activeColor}`}
-                style={isActive ? { clipPath: 'polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%)' } : {}}
-              >
+              <button key={tab} role="tab" aria-selected={active} onClick={() => changeSort(tab)}
+                className={`flex-1 font-black italic text-[14px] tracking-widest transition-all text-white ${color}`}
+                style={active ? { clipPath: 'polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%)' } : {}}>
                 {tab} MODE
               </button>
             );
@@ -101,51 +66,31 @@ export default function List() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-24 z-10 relative">
+      <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-24">
         {error && <div className="text-red-500 font-bold text-center">{error}</div>}
+        {isLoading && <div className="bg-white border border-stone-200 rounded-[2.5rem] p-6 animate-pulse h-48" />}
         
-        {isLoading && (
-          <div className="bg-white border border-stone-200 rounded-[2.5rem] p-6 animate-pulse h-48"></div>
-        )}
-
-        {!isLoading && sortedData.map((item) => (
-          <Link 
-            key={item.id}
-            href={`/detail`}
-            onClick={() => handleCardClick(item)}
-            className="block bg-white border border-stone-200 rounded-[2.5rem] p-6 shadow-sm active:scale-[0.98] transition-all focus:outline-none focus:ring-4 focus:ring-stone-400"
-            aria-label={`${item.name}の詳細を見る。価格 ${item.price}円`}
-          >
+        {sorted.map(item => (
+          <Link key={item.id} href={buildDetailUrl(item.id)}   // ← 検索条件付きURL
+            className="block bg-white border border-stone-200 rounded-[2.5rem] p-6 shadow-sm active:scale-[0.98] transition-all"
+            aria-label={`${item.name}、¥${item.price.toLocaleString()}`}>
             <div className="flex gap-5 mb-5">
-              <img src={item.image} className="w-20 h-20 rounded-2xl object-cover border border-stone-200 grayscale-[0.1]" alt="" aria-hidden="true" />
-              <div className="flex-1 overflow-hidden">
+              <img src={item.image} alt="" className="w-20 h-20 rounded-2xl object-cover border border-stone-200 grayscale-[0.1]" />
+              <div className="flex-1">
                 <h2 className="text-lg font-black italic leading-tight text-stone-800 line-clamp-2">{item.name}</h2>
-                <p className="text-[28px] font-black text-stone-500 mt-1 leading-none drop-shadow-sm">¥{item.price.toLocaleString()}</p>
+                <p className="text-[28px] font-black text-stone-500 mt-1">¥{item.price.toLocaleString()}</p>
               </div>
             </div>
-            
             <div className="space-y-3 bg-stone-50 p-4 rounded-2xl border border-stone-100">
-              <div className={`flex items-center gap-3 ${sortKey === 'WAR' ? '' : 'opacity-40 grayscale'}`}>
-                <span className="w-10 text-[14px] font-black italic text-red-500">WAR</span>
-                <div className="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-red-500 transition-all duration-500" style={{ width: `${item.metrics.WAR.pct}%` }}></div>
+              {TABS.map(m => (
+                <div key={m} className={`flex items-center gap-3 ${sortKey === m ? '' : 'opacity-40 grayscale'}`}>
+                  <span className={`w-10 text-[14px] font-black italic ${m === 'WAR' ? 'text-red-500' : m === 'ISO' ? 'text-blue-500' : 'text-green-500'}`}>{m}</span>
+                  <div className="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                    <div className={`h-full ${m === 'WAR' ? 'bg-red-500' : m === 'ISO' ? 'bg-blue-500' : 'bg-green-500'}`} style={{ width: `${item.metrics[m].pct}%` }} />
+                  </div>
+                  <span className="text-[16px] font-black text-stone-700 w-12 text-right">{item.metrics[m].value}</span>
                 </div>
-                <span className="text-[16px] font-black text-stone-700 w-12 text-right">{item.metrics.WAR.value}</span>
-              </div>
-              <div className={`flex items-center gap-3 ${sortKey === 'ISO' ? '' : 'opacity-40 grayscale'}`}>
-                <span className="w-10 text-[14px] font-black italic text-blue-500">ISO</span>
-                <div className="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${item.metrics.ISO.pct}%` }}></div>
-                </div>
-                <span className="text-[16px] font-black text-stone-700 w-12 text-right">{item.metrics.ISO.value}</span>
-              </div>
-              <div className={`flex items-center gap-3 ${sortKey === 'FIP' ? '' : 'opacity-40 grayscale'}`}>
-                <span className="w-10 text-[14px] font-black italic text-green-500">FIP</span>
-                <div className="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${item.metrics.FIP.pct}%` }}></div>
-                </div>
-                <span className="text-[16px] font-black text-stone-700 w-12 text-right">{item.metrics.FIP.value}</span>
-              </div>
+              ))}
             </div>
           </Link>
         ))}
