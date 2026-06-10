@@ -5,6 +5,13 @@ import { RakScoutItem } from '../types';
 
 type SortKey = 'WAR' | 'ISO' | 'FIP';
 
+// === ハッシュフラグメントからクエリを取得 ===
+const getHashSearch = () => {
+  const hash = window.location.hash || '';
+  const queryIndex = hash.indexOf('?');
+  return queryIndex === -1 ? '' : hash.slice(queryIndex + 1);
+};
+
 export default function List() {
   const [, setLocation] = useLocation();
   const searchInputId = useId();
@@ -13,9 +20,9 @@ export default function List() {
   const [isFurusato, setIsFurusato] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('WAR');
 
-  // URLから検索条件を復元
+  // ハッシュから検索条件を復元
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(getHashSearch());
     setKeyword(params.get('q') || '');
     setIsFurusato(params.get('furusato') === '1');
     const sort = params.get('sort') as SortKey;
@@ -32,16 +39,19 @@ export default function List() {
   }, [apiData, sortKey]);
 
   const handleSortChange = (newSort: SortKey) => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(getHashSearch());
     params.set('sort', newSort);
     setLocation(`/list?${params.toString()}`);
     setSortKey(newSort);
   };
 
-  // 詳細ページURLに検索条件を引き継ぐ
+  // 詳細ページURLをハッシュ内に全パラメータを含めて構築
   const buildDetailUrl = (item: RakScoutItem) => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams();
     params.set('id', item.id);
+    params.set('q', keyword);
+    params.set('sort', sortKey);
+    if (isFurusato) params.set('furusato', '1');
     return `/detail?${params.toString()}`;
   };
 
