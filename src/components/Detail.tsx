@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useScoutSearch } from '../hooks/useScoutSearch';
 import MetricBar from './MetricBar';
@@ -7,7 +7,6 @@ export default function Detail() {
   const [, setLocation] = useLocation();
   const [location] = useLocation();
   
-  // URLから全パラメータを取得
   const params = useMemo(() => {
     const search = location.split('?')[1] || '';
     return new URLSearchParams(search);
@@ -17,14 +16,28 @@ export default function Detail() {
   const keyword = params.get('q') || '';
   const isFurusato = params.get('furusato') === '1';
 
-  // APIから直接取得（sessionStorage不要）
+  // === 診断ログ ===
+  useEffect(() => {
+    console.log('=== Detail Diagnostic ===');
+    console.log('Full URL:', window.location.href);
+    console.log('location hook:', location);
+    console.log('parsed params:', { id, keyword, isFurusato });
+    console.log('search string:', location.split('?')[1]);
+  }, [location, id, keyword, isFurusato]);
+
   const { data: apiData, isLoading, error } = useScoutSearch(keyword, isFurusato);
-  
+
+  // === 診断ログ ===
+  useEffect(() => {
+    console.log('API Result:', { isLoading, error, dataLength: apiData?.length, hasItem: apiData?.some(i => i.id === id) });
+  }, [apiData, isLoading, error, id]);
+
   const item = useMemo(() => {
-    return apiData?.find(i => i.id === id);
+    const found = apiData?.find(i => i.id === id);
+    console.log('Finding item:', id, 'found:', !!found, 'in', apiData?.length, 'items');
+    return found;
   }, [apiData, id]);
 
-  // 戻るURL（検索条件を維持）
   const backUrl = useMemo(() => {
     const next = new URLSearchParams(params);
     next.delete('id');
@@ -45,12 +58,14 @@ export default function Detail() {
   if (error || !item) {
     return (
       <div className="flex flex-col h-full bg-cream p-5 items-center justify-center">
-        <p className="text-red-500 font-bold text-center mb-4">{error || '商品が見つかりません'}</p>
+        <p className="text-red-500 font-bold text-center mb-4">
+          {error || `商品が見つかりません (ID: ${id}, keyword: ${keyword})`}
+        </p>
         <button 
-          onClick={() => setLocation('/')}
+          onClick={() => setLocation(backUrl)}
           className="px-6 py-3 bg-stone-800 text-white rounded-xl font-black"
         >
-          ホームに戻る
+          検索結果に戻る
         </button>
       </div>
     );
