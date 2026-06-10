@@ -3,6 +3,11 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: ["main"]
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -20,21 +25,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
+      
       - name: Install dependencies
         run: npm ci
+      
       - name: Build
-        env:
-          VITE_RAKUTEN_APP_ID: ${{ secrets.RAKUTEN_APP_ID }}
-          VITE_RAKUTEN_ACCESS_KEY: ${{ secrets.RAKUTEN_ACCESS_KEY }}
-          VITE_RAKUTEN_AFFILIATE_ID: ${{ secrets.RAKUTEN_AFFILIATE_ID }}
-        run: npm run build
+        run: |
+          echo "VITE_RAKUTEN_APP_ID=${{ secrets.RAKUTEN_APP_ID }}" >> .env
+          echo "VITE_RAKUTEN_ACCESS_KEY=${{ secrets.RAKUTEN_ACCESS_KEY }}" >> .env
+          echo "VITE_RAKUTEN_AFFILIATE_ID=${{ secrets.RAKUTEN_AFFILIATE_ID }}" >> .env
+          npm run build
+      
       - name: Setup Pages
         uses: actions/configure-pages@v4
+      
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
