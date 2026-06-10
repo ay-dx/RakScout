@@ -5,12 +5,7 @@ import { RakScoutItem } from '../types';
 
 type SortKey = 'WAR' | 'ISO' | 'FIP';
 
-// === ハッシュフラグメントからクエリを取得 ===
-const getHashSearch = () => {
-  const hash = window.location.hash || '';
-  const queryIndex = hash.indexOf('?');
-  return queryIndex === -1 ? '' : hash.slice(queryIndex + 1);
-};
+const STORAGE_KEY = 'rakScoutSearchParams';
 
 export default function List() {
   const [, setLocation] = useLocation();
@@ -20,9 +15,18 @@ export default function List() {
   const [isFurusato, setIsFurusato] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('WAR');
 
-  // ハッシュから検索条件を復元
   useEffect(() => {
-    const params = new URLSearchParams(getHashSearch());
+    const params = new URLSearchParams(window.location.search);
+    
+    // URLに検索パラメータがない → sessionStorageから復元
+    if (!params.has('q')) {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setLocation(`/list?${saved}`, { replace: true });
+        return;
+      }
+    }
+    
     setKeyword(params.get('q') || '');
     setIsFurusato(params.get('furusato') === '1');
     const sort = params.get('sort') as SortKey;
@@ -39,29 +43,26 @@ export default function List() {
   }, [apiData, sortKey]);
 
   const handleSortChange = (newSort: SortKey) => {
-    const params = new URLSearchParams(getHashSearch());
+    const params = new URLSearchParams(window.location.search);
     params.set('sort', newSort);
+    sessionStorage.setItem(STORAGE_KEY, params.toString());
     setLocation(`/list?${params.toString()}`);
     setSortKey(newSort);
   };
 
-  // 詳細ページURLをハッシュ内に全パラメータを含めて構築
-  const buildDetailUrl = (item: RakScoutItem) => {
-    const params = new URLSearchParams();
-    params.set('id', item.id);
-    params.set('q', keyword);
-    params.set('sort', sortKey);
-    if (isFurusato) params.set('furusato', '1');
-    return `/detail?${params.toString()}`;
+  const handleCardClick = (item: RakScoutItem) => {
+    sessionStorage.setItem('rakScoutSelectedItem', JSON.stringify(item));
+    // 現在の検索条件も保存
+    sessionStorage.setItem(STORAGE_KEY, new URLSearchParams(window.location.search).toString());
   };
 
   return (
     <div className="flex flex-col h-full bg-cream">
-      <header id="list-header" className="p-5 bg-white/80 backdrop-blur-md border-b-2 shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-colors duration-500 relative" style={{borderColor: sortKey === 'WAR' ? '#ef4444' : sortKey === 'ISO' ? '#3b82f6' : '#22c55e'}}>
+      <header className="p-5 bg-white/80 backdrop-blur-md border-b-2 border-stone-200 shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.06)] relative">
         <div className="flex items-center gap-3 mb-5">
           <button 
             onClick={() => setLocation('/')} 
-            className="p-3 bg-stone-100 rounded-full border border-stone-200 active:scale-90 transition-transform text-stone-600"
+            className="p-3 bg-stone-100 rounded-full border border-stone-200 active:scale-90 transition-transform text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-400"
             aria-label="ホームに戻る"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg>
@@ -82,7 +83,7 @@ export default function List() {
           </div>
         </div>
 
-        <div className="flex gap-1 h-14">
+        <div className="flex gap-1 h-12">
           {(['WAR', 'ISO', 'FIP'] as SortKey[]).map((tab) => {
             const isActive = sortKey === tab;
             let activeColor = 'bg-stone-100 text-stone-400';
@@ -96,7 +97,7 @@ export default function List() {
                 key={tab}
                 onClick={() => handleSortChange(tab)}
                 aria-pressed={isActive}
-                className={`flex-1 font-black italic text-[14px] tracking-widest transition-all ${activeColor}`}
+                className={`flex-1 font-black italic text-[14px] tracking-widest transition-all focus:outline-none focus:ring-2 focus:ring-stone-400 ${activeColor}`}
                 style={isActive ? { clipPath: 'polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%)' } : {}}
               >
                 {tab} MODE
@@ -106,7 +107,7 @@ export default function List() {
         </div>
       </header>
 
-      <div id="list-container" className="flex-1 overflow-y-auto p-5 space-y-6 pb-24 z-10 relative">
+      <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-24 z-10 relative">
         {error && <div className="text-red-500 font-bold text-center">{error}</div>}
         
         {isLoading && (
@@ -116,8 +117,9 @@ export default function List() {
         {!isLoading && sortedData.map((item) => (
           <Link 
             key={item.id}
-            href={buildDetailUrl(item)}
-            className="block bg-white border border-stone-200 rounded-[2.5rem] p-6 shadow-sm active:scale-[0.98] transition-all"
+            href={`/detail?id=${encodeURIComponent(item.id)}`}
+            onClick={() => handleCardClick(item)}
+            className="block bg-white border border-stone-200 rounded-[2.5rem] p-6 shadow-sm active:scale-[0.98] transition-all focus:outline-none focus:ring-4 focus:ring-stone-400"
             aria-label={`${item.name}の詳細を見る。価格 ${item.price}円`}
           >
             <div className="flex gap-5 mb-5">
