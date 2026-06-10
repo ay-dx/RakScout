@@ -16,12 +16,18 @@ export default function Detail() {
     }
   }, [setLocation]);
 
+  const handleBack = () => {
+    // リスト画面に戻る際、保存しておいた検索クエリを復元する
+    const prevQuery = sessionStorage.getItem('rakScoutSearchQuery') || '';
+    setLocation(`/list?${prevQuery}`);
+  };
+
   if (!item) return null;
 
   return (
     <div className="flex flex-col h-full bg-cream p-5 overflow-y-auto">
       <button 
-        onClick={() => setLocation('/list' + window.location.search)} 
+        onClick={handleBack} 
         className="w-12 h-12 mb-5 flex items-center justify-center bg-white/80 backdrop-blur rounded-full border border-stone-200 active:scale-90 z-20 shadow-lg shrink-0 text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-400"
         aria-label="リストに戻る"
       >
@@ -29,7 +35,7 @@ export default function Detail() {
       </button>
 
       <div className="flex-1 flex flex-col items-center">
-        {/* レアカード外枠 */}
+        {/* レアカード外枠 (静的・3D排除版) */}
         <div className="w-full relative shadow-[0_30px_60px_rgba(0,0,0,0.12)] p-1 bg-[linear-gradient(135deg,#ffffff_0%,#e7e5e4_20%,#a8a29e_50%,#e7e5e4_80%,#ffffff_100%)]" style={{ clipPath: 'polygon(4% 0%, 96% 0%, 100% 100%, 0% 100%)' }}>
           
           <div className="w-full pt-8 pb-10 px-6 bg-carbon relative" style={{ clipPath: 'polygon(4% 0%, 96% 0%, 100% 100%, 0% 100%)' }}>

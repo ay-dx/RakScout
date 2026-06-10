@@ -13,33 +13,38 @@ export default function List() {
   const [isFurusato, setIsFurusato] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('WAR');
 
+  // ハッシュルーター仕様: URLから状態を同期
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const queryString = window.location.hash.split('?')[1] || '';
+    const params = new URLSearchParams(queryString);
     setKeyword(params.get('q') || '');
     setIsFurusato(params.get('furusato') === '1');
     const sort = params.get('sort') as SortKey;
     if (sort && ['WAR', 'ISO', 'FIP'].includes(sort)) {
       setSortKey(sort);
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data: apiData, isLoading, error } = useScoutSearch(keyword, isFurusato);
 
   const sortedData = useMemo(() => {
     if (!apiData) return [];
-    // 値はMLBスケール文字列なので、数値パースして降順ソート
     return [...apiData].sort((a, b) => parseFloat(b.metrics[sortKey].value) - parseFloat(a.metrics[sortKey].value));
   }, [apiData, sortKey]);
 
   const handleSortChange = (newSort: SortKey) => {
-    const params = new URLSearchParams(window.location.search);
+    const queryString = window.location.hash.split('?')[1] || '';
+    const params = new URLSearchParams(queryString);
     params.set('sort', newSort);
     setLocation(`/list?${params.toString()}`);
     setSortKey(newSort);
   };
 
   const handleCardClick = (item: RakScoutItem) => {
+    // 選択したアイテムと、現在の検索クエリ(戻るボタン用)を保存
     sessionStorage.setItem('rakScoutSelectedItem', JSON.stringify(item));
+    const queryString = window.location.hash.split('?')[1] || '';
+    sessionStorage.setItem('rakScoutSearchQuery', queryString);
   };
 
   return (
@@ -64,7 +69,7 @@ export default function List() {
               value={keyword}
               readOnly
               onClick={() => setLocation('/')}
-              className="w-full pl-10 pr-4 py-3 bg-transparent text-lg font-black outline-none text-stone-800" 
+              className="w-full pl-10 pr-4 py-3 bg-transparent text-lg font-black outline-none text-stone-800 cursor-pointer" 
             />
           </div>
         </div>
@@ -120,21 +125,21 @@ export default function List() {
               <div className={`flex items-center gap-3 ${sortKey === 'WAR' ? '' : 'opacity-40 grayscale'}`}>
                 <span className="w-10 text-[14px] font-black italic text-red-500">WAR</span>
                 <div className="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-red-500" style={{ width: `${item.metrics.WAR.pct}%` }}></div>
+                  <div className="h-full bg-red-500 transition-all duration-500" style={{ width: `${item.metrics.WAR.pct}%` }}></div>
                 </div>
                 <span className="text-[16px] font-black text-stone-700 w-12 text-right">{item.metrics.WAR.value}</span>
               </div>
               <div className={`flex items-center gap-3 ${sortKey === 'ISO' ? '' : 'opacity-40 grayscale'}`}>
                 <span className="w-10 text-[14px] font-black italic text-blue-500">ISO</span>
                 <div className="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500" style={{ width: `${item.metrics.ISO.pct}%` }}></div>
+                  <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${item.metrics.ISO.pct}%` }}></div>
                 </div>
                 <span className="text-[16px] font-black text-stone-700 w-12 text-right">{item.metrics.ISO.value}</span>
               </div>
               <div className={`flex items-center gap-3 ${sortKey === 'FIP' ? '' : 'opacity-40 grayscale'}`}>
                 <span className="w-10 text-[14px] font-black italic text-green-500">FIP</span>
                 <div className="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-green-500" style={{ width: `${item.metrics.FIP.pct}%` }}></div>
+                  <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${item.metrics.FIP.pct}%` }}></div>
                 </div>
                 <span className="text-[16px] font-black text-stone-700 w-12 text-right">{item.metrics.FIP.value}</span>
               </div>
