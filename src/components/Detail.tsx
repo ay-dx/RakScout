@@ -3,34 +3,39 @@ import { useLocation } from 'wouter';
 import { useScoutSearch } from '../hooks/useScoutSearch';
 import MetricBar from './MetricBar';
 
+// === ブラウザの実際のURLからクエリパラメータを取得 ===
+const getSearchParams = () => new URLSearchParams(window.location.search);
+
 export default function Detail() {
   const [, setLocation] = useLocation();
-  const [location] = useLocation();
   
-  const params = useMemo(() => {
-    const search = location.split('?')[1] || '';
-    return new URLSearchParams(search);
-  }, [location]);
+  // wouter の location はハッシュのみ。クエリは window.location.search で取得
+  const params = useMemo(() => getSearchParams(), []);
+  
+  // URL変更を検知するための強制再レンダリング用
+  const [urlKey, setUrlKey] = useState(0);
+  useEffect(() => {
+    const handleHashChange = () => setUrlKey(k => k + 1);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
-  const id = params.get('id') || '';
-  const keyword = params.get('q') || '';
-  const isFurusato = params.get('furusato') === '1';
+  // urlKey が変わるたびに再計算
+  const currentParams = useMemo(() => getSearchParams(), [urlKey]);
+
+  const id = currentParams.get('id') || '';
+  const keyword = currentParams.get('q') || '';
+  const isFurusato = currentParams.get('furusato') === '1';
 
   // === 診断ログ ===
   useEffect(() => {
     console.log('=== Detail Diagnostic ===');
-    console.log('Full URL:', window.location.href);
-    console.log('location hook:', location);
+    console.log('window.location.href:', window.location.href);
+    console.log('window.location.search:', window.location.search);
     console.log('parsed params:', { id, keyword, isFurusato });
-    console.log('search string:', location.split('?')[1]);
-  }, [location, id, keyword, isFurusato]);
+  }, [id, keyword, isFurusato]);
 
   const { data: apiData, isLoading, error } = useScoutSearch(keyword, isFurusato);
-
-  // === 診断ログ ===
-  useEffect(() => {
-    console.log('API Result:', { isLoading, error, dataLength: apiData?.length, hasItem: apiData?.some(i => i.id === id) });
-  }, [apiData, isLoading, error, id]);
 
   const item = useMemo(() => {
     const found = apiData?.find(i => i.id === id);
@@ -39,10 +44,10 @@ export default function Detail() {
   }, [apiData, id]);
 
   const backUrl = useMemo(() => {
-    const next = new URLSearchParams(params);
+    const next = new URLSearchParams(currentParams);
     next.delete('id');
     return `/list?${next.toString()}`;
-  }, [params]);
+  }, [currentParams]);
 
   if (isLoading) {
     return (
@@ -59,13 +64,13 @@ export default function Detail() {
     return (
       <div className="flex flex-col h-full bg-cream p-5 items-center justify-center">
         <p className="text-red-500 font-bold text-center mb-4">
-          {error || `商品が見つかりません (ID: ${id}, keyword: ${keyword})`}
+          {error || `商品が見つかりません (ID: ${id}, keyword: "${keyword}")`}
         </p>
         <button 
-          onClick={() => setLocation(backUrl)}
+          onClick={() => setLocation('/')}
           className="px-6 py-3 bg-stone-800 text-white rounded-xl font-black"
         >
-          検索結果に戻る
+          ホームに戻る
         </button>
       </div>
     );
