@@ -13,23 +13,14 @@ export default function List() {
   const [isFurusato, setIsFurusato] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('WAR');
 
+  // URLから検索条件を復元
   useEffect(() => {
-    // 保存された検索条件があれば復元
-    const saved = sessionStorage.getItem('rakScoutSearchParams');
-    const search = saved || window.location.search;
-    const params = new URLSearchParams(search);
-    
+    const params = new URLSearchParams(window.location.search);
     setKeyword(params.get('q') || '');
     setIsFurusato(params.get('furusato') === '1');
     const sort = params.get('sort') as SortKey;
     if (sort && ['WAR', 'ISO', 'FIP'].includes(sort)) {
       setSortKey(sort);
-    }
-    
-    // URLを正しい検索条件に戻す（履歴を汚さないreplace）
-    if (saved && window.location.search !== saved) {
-      window.history.replaceState(null, '', '/list' + saved);
-      sessionStorage.removeItem('rakScoutSearchParams');
     }
   }, []);
 
@@ -47,14 +38,16 @@ export default function List() {
     setSortKey(newSort);
   };
 
-  const handleCardClick = (item: RakScoutItem) => {
-    sessionStorage.setItem('rakScoutSelectedItem', JSON.stringify(item));
-    sessionStorage.setItem('rakScoutSearchParams', window.location.search);
+  // 詳細ページURLに検索条件を引き継ぐ
+  const buildDetailUrl = (item: RakScoutItem) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('id', item.id);
+    return `/detail?${params.toString()}`;
   };
 
   return (
     <div className="flex flex-col h-full bg-cream">
-      <header id="list-header" className="p-5 bg-white/80 backdrop-blur-md border-b-2 border-red-500 shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-colors duration-500 relative" style={{borderColor: sortKey === 'WAR' ? '#ef4444' : sortKey === 'ISO' ? '#3b82f6' : '#22c55e'}}>
+      <header id="list-header" className="p-5 bg-white/80 backdrop-blur-md border-b-2 shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-colors duration-500 relative" style={{borderColor: sortKey === 'WAR' ? '#ef4444' : sortKey === 'ISO' ? '#3b82f6' : '#22c55e'}}>
         <div className="flex items-center gap-3 mb-5">
           <button 
             onClick={() => setLocation('/')} 
@@ -113,8 +106,7 @@ export default function List() {
         {!isLoading && sortedData.map((item) => (
           <Link 
             key={item.id}
-            href={`/detail?id=${encodeURIComponent(item.id)}`}
-            onClick={() => handleCardClick(item)}
+            href={buildDetailUrl(item)}
             className="block bg-white border border-stone-200 rounded-[2.5rem] p-6 shadow-sm active:scale-[0.98] transition-all"
             aria-label={`${item.name}の詳細を見る。価格 ${item.price}円`}
           >
