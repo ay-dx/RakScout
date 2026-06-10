@@ -1,1 +1,0 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/header.tsx","./src/components/metricbar.tsx","./src/components/rarecard.tsx","./src/components/searchbar.tsx","./src/hooks/analytics.ts","./src/hooks/usescoutsearch.ts","./src/pages/detail.tsx","./src/pages/home.tsx","./src/pages/list.tsx","./src/types/index.ts"],"version":"5.9.3"}
