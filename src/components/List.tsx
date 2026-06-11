@@ -5,6 +5,8 @@ import { RakScoutItem } from '../types';
 
 type SortKey = 'WAR' | 'ISO' | 'FIP';
 
+const STORAGE_KEY = 'rakScoutSearchParams';
+
 export default function List() {
   const [, setLocation] = useLocation();
   const searchInputId = useId();
@@ -15,6 +17,15 @@ export default function List() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    
+    if (!params.has('q')) {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setLocation(`/list?${saved}`, { replace: true });
+        return;
+      }
+    }
+    
     setKeyword(params.get('q') || '');
     setIsFurusato(params.get('furusato') === '1');
     const sort = params.get('sort') as SortKey;
@@ -27,19 +38,24 @@ export default function List() {
 
   const sortedData = useMemo(() => {
     if (!apiData) return [];
-    // 値はMLBスケール文字列なので、数値パースして降順ソート
-    return [...apiData].sort((a, b) => parseFloat(b.metrics[sortKey].value) - parseFloat(a.metrics[sortKey].value));
+    return [...apiData].sort((a, b) => {
+      const valA = parseFloat(a.metrics[sortKey].value);
+      const valB = parseFloat(b.metrics[sortKey].value);
+      return sortKey === 'FIP' ? valA - valB : valB - valA;
+    });
   }, [apiData, sortKey]);
 
   const handleSortChange = (newSort: SortKey) => {
     const params = new URLSearchParams(window.location.search);
     params.set('sort', newSort);
+    sessionStorage.setItem(STORAGE_KEY, params.toString());
     setLocation(`/list?${params.toString()}`);
     setSortKey(newSort);
   };
 
   const handleCardClick = (item: RakScoutItem) => {
     sessionStorage.setItem('rakScoutSelectedItem', JSON.stringify(item));
+    sessionStorage.setItem(STORAGE_KEY, new URLSearchParams(window.location.search).toString());
   };
 
   return (
