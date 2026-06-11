@@ -11,22 +11,45 @@ export default function Detail() {
   const [item, setItem] = useState<RakScoutItem | null>(null);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const detailId = params.get('detail');
+    // 検索条件を取得（?q=xxx&sort=WAR）
+    const searchParams = new URLSearchParams(window.location.search);
+    const q = searchParams.get('q');
+    const sort = searchParams.get('sort');
+    const furusato = searchParams.get('furusato');
+    
+    // detailIdを取得（#/detail?id=xxx）
+    const hash = window.location.hash;
+    const hashParams = new URLSearchParams(hash.split('?')[1] || '');
+    const detailId = hashParams.get('id') || hashParams.get('detail');
+    
+    // detailIdがない → ホームに戻る
+    if (!detailId) {
+      setLocation('/');
+      return;
+    }
     
     // 商品データ取得
     const itemStr = sessionStorage.getItem('rakScoutSelectedItem');
     if (itemStr) {
-      const parsed = JSON.parse(itemStr);
-      if (parsed.id === detailId) {
-        setItem(parsed);
+      try {
+        const parsed = JSON.parse(itemStr);
+        if (parsed.id === detailId) {
+          setItem(parsed);
+        } else {
+          console.warn('商品ID不一致:', parsed.id, '!==', detailId);
+        }
+      } catch (e) {
+        console.error('パース失敗:', e);
       }
     }
     
-    // detail パラメータを除去して検索条件を保存（他の商品を見る用）
-    params.delete('detail');
-    sessionStorage.setItem(STORAGE_KEY, params.toString());
-  }, []);
+    // 検索条件を保存
+    const savedParams = new URLSearchParams();
+    if (q) savedParams.set('q', q);
+    if (sort) savedParams.set('sort', sort);
+    if (furusato) savedParams.set('furusato', furusato);
+    sessionStorage.setItem(STORAGE_KEY, savedParams.toString());
+  }, [setLocation]);
 
   const handleToResults = () => {
     const savedParams = sessionStorage.getItem(STORAGE_KEY);
