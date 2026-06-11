@@ -33,7 +33,7 @@ export default function Home() {
           RakScout
         </header>
 
-        {/* 優先度1: ファーストビュー強化 */}
+        {/* ファーストビュー */}
         <section className="mt-6 text-center">
           <h1 className="sr-only">楽天市場のお宝商品＆ふるさと納税を一括検索 | RakScout</h1>
           <h2 className="text-6xl font-black italic leading-[0.85] tracking-tighter text-stone-800 drop-shadow-[0_4px_12px_rgba(0,0,0,0.08)]" aria-hidden="true">
@@ -41,7 +41,7 @@ export default function Home() {
           </h2>
           <p className="mt-4 text-lg text-stone-600 max-w-md mx-auto leading-relaxed">
             楽天市場とふるさと納税から<br/>
-            <span className="font-bold text-stone-800">還元率・コスパ最強のお宝</span>を<br/>
+            <span className="font-bold text-stone-800">コスパ最強のお宝</span>を<br/>
             セイバーメトリクスで発掘します
           </p>
         </section>
@@ -65,7 +65,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 優先度2: 検索前価値提示 */}
+        {/* 検索前価値提示 */}
         <section className="mt-6 mb-2">
           <h2 className="sr-only">RakScoutの特徴</h2>
           <div className="space-y-2">
@@ -75,7 +75,7 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-2 text-[12px] text-stone-600">
               <span className="w-5 h-5 rounded-full bg-stone-200 flex items-center justify-center text-[10px] font-black shrink-0">2</span>
-              <span>高還元率フィルタで<span className="font-bold text-stone-800">損しない選択</span></span>
+              <span>レビュー評価と価格のバランスで<span className="font-bold text-stone-800">損しない選択</span></span>
             </div>
             <div className="flex items-center gap-2 text-[12px] text-stone-600">
               <span className="w-5 h-5 rounded-full bg-stone-200 flex items-center justify-center text-[10px] font-black shrink-0">3</span>
@@ -131,7 +131,7 @@ export default function Home() {
             検索を開始する
           </button>
 
-          {/* 優先度3: サンプルキーワード */}
+          {/* サンプルキーワード */}
           <div className="mt-4">
             <h3 className="text-[10px] font-black text-stone-400 tracking-widest uppercase mb-2">おすすめ検索</h3>
             <div className="flex flex-wrap gap-2">
