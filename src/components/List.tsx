@@ -18,7 +18,6 @@ export default function List() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     
-    // URLに検索パラメータがない → sessionStorageから復元
     if (!params.has('q')) {
       const saved = sessionStorage.getItem(STORAGE_KEY);
       if (saved) {
@@ -39,7 +38,11 @@ export default function List() {
 
   const sortedData = useMemo(() => {
     if (!apiData) return [];
-    return [...apiData].sort((a, b) => parseFloat(b.metrics[sortKey].value) - parseFloat(a.metrics[sortKey].value));
+    return [...apiData].sort((a, b) => {
+      const valA = parseFloat(a.metrics[sortKey].value);
+      const valB = parseFloat(b.metrics[sortKey].value);
+      return sortKey === 'FIP' ? valA - valB : valB - valA;
+    });
   }, [apiData, sortKey]);
 
   const handleSortChange = (newSort: SortKey) => {
@@ -52,7 +55,6 @@ export default function List() {
 
   const handleCardClick = (item: RakScoutItem) => {
     sessionStorage.setItem('rakScoutSelectedItem', JSON.stringify(item));
-    // 現在の検索条件も保存
     sessionStorage.setItem(STORAGE_KEY, new URLSearchParams(window.location.search).toString());
   };
 
