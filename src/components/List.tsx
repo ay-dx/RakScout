@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useId } from 'react';
-import { useLocation, Link } from 'wouter';
+import { useLocation } from 'wouter';
 import { useScoutSearch } from '../hooks/useScoutSearch';
 import { RakScoutItem } from '../types';
 
@@ -7,26 +7,40 @@ type SortKey = 'WAR' | 'ISO' | 'FIP';
 
 const STORAGE_KEY = 'rakScoutSearchParams';
 
+// ハッシュルーティング用：URLSearchParamsを取得
+function getHashParams(): URLSearchParams {
+  const hash = window.location.hash;
+  const queryIndex = hash.indexOf('?');
+  const queryString = queryIndex >= 0 ? hash.slice(queryIndex + 1) : '';
+  return new URLSearchParams(queryString);
+}
+
 export default function List() {
   const [, setLocation] = useLocation();
   const searchInputId = useId();
-  
+
   const [keyword, setKeyword] = useState('');
   const [isFurusato, setIsFurusato] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('WAR');
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    
+    // Detailページの残骸（?id=xxx）が残っている場合は除去
+    if (window.location.search.includes('id=') || window.location.search.includes('detail=')) {
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState(null, '', cleanUrl);
+    }
+
+    const params = getHashParams();
+
     // URLに検索パラメータがない → sessionStorageから復元
     if (!params.has('q')) {
       const saved = sessionStorage.getItem(STORAGE_KEY);
-      if (saved) {
+      if (saved && saved.length > 0) {
         setLocation(`/list?${saved}`, { replace: true });
         return;
       }
     }
-    
+
     setKeyword(params.get('q') || '');
     setIsFurusato(params.get('furusato') === '1');
     const sort = params.get('sort') as SortKey;
@@ -48,7 +62,7 @@ export default function List() {
   }, [apiData, sortKey]);
 
   const handleSortChange = (newSort: SortKey) => {
-    const params = new URLSearchParams(window.location.search);
+    const params = getHashParams();
     params.set('sort', newSort);
     sessionStorage.setItem(STORAGE_KEY, params.toString());
     setLocation(`/list?${params.toString()}`);
@@ -58,13 +72,21 @@ export default function List() {
   const handleCardClick = (item: RakScoutItem) => {
     // 商品データを保存
     sessionStorage.setItem('rakScoutSelectedItem', JSON.stringify(item));
-    
-    // 現在の検索条件に detail パラメータを追加
-    const currentParams = new URLSearchParams(window.location.search);
-    currentParams.set('detail', item.id);
-    
+
+    // 現在の検索条件を取得
+    const currentParams = getHashParams();
+    const hashParams = new URLSearchParams();
+
+    // 検索条件を引き継ぐ
+    if (currentParams.get('q')) hashParams.set('q', currentParams.get('q')!);
+    if (currentParams.get('sort')) hashParams.set('sort', currentParams.get('sort')!);
+    if (currentParams.get('furusato')) hashParams.set('furusato', currentParams.get('furusato')!);
+
+    // detailパラメータを追加
+    hashParams.set('id', item.id);
+
     // Detail へ遷移（検索条件付きURL）
-    setLocation(`/detail?${currentParams.toString()}`);
+    setLocation(`/detail?${hashParams.toString()}`);
   };
 
   return (
@@ -78,7 +100,7 @@ export default function List() {
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg>
           </button>
-          
+
           <div className="relative flex items-center w-full bg-white/80 border border-stone-200 rounded-xl focus-within:border-stone-400 transition-all">
             <label htmlFor={searchInputId} className="absolute left-3 text-stone-400">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -120,18 +142,20 @@ export default function List() {
 
       <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-24 z-10 relative">
         {error && <div className="text-red-500 font-bold text-center">{error}</div>}
-        
+
         {isLoading && (
           <div className="bg-white border border-stone-200 rounded-[2.5rem] p-6 animate-pulse h-48"></div>
         )}
 
         {!isLoading && sortedData.map((item) => (
-          <Link 
+          <div
             key={item.id}
-            href={`/detail?id=${encodeURIComponent(item.id)}`}
             onClick={() => handleCardClick(item)}
-            className="block bg-white border border-stone-200 rounded-[2.5rem] p-6 shadow-sm active:scale-[0.98] transition-all focus:outline-none focus:ring-4 focus:ring-stone-400"
+            className="block bg-white border border-stone-200 rounded-[2.5rem] p-6 shadow-sm active:scale-[0.98] transition-all focus:outline-none focus:ring-4 focus:ring-stone-400 cursor-pointer"
+            role="link"
+            tabIndex={0}
             aria-label={`${item.name}の詳細を見る。価格 ${item.price}円`}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleCardClick(item); }}
           >
             <div className="flex gap-5 mb-5">
               <img src={item.image} className="w-20 h-20 rounded-2xl object-cover border border-stone-200 grayscale-[0.1]" alt="" aria-hidden="true" />
@@ -140,7 +164,7 @@ export default function List() {
                 <p className="text-[28px] font-black text-stone-500 mt-1 leading-none drop-shadow-sm">¥{item.price.toLocaleString()}</p>
               </div>
             </div>
-            
+
             <div className="space-y-3 bg-stone-50 p-4 rounded-2xl border border-stone-100">
               <div className={`flex items-center gap-3 ${sortKey === 'WAR' ? '' : 'opacity-40 grayscale'}`}>
                 <span className="w-10 text-[14px] font-black italic text-red-500">WAR</span>
@@ -164,7 +188,7 @@ export default function List() {
                 <span className="text-[16px] font-black text-stone-700 w-12 text-right">{item.metrics.FIP.value}</span>
               </div>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
     </div>

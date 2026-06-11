@@ -6,6 +6,14 @@ import MetricBar from './MetricBar';
 
 const STORAGE_KEY = 'rakScoutSearchParams';
 
+// ハッシュルーティング用：URLSearchParamsを取得
+function getHashParams(): URLSearchParams {
+  const hash = window.location.hash;
+  const queryIndex = hash.indexOf('?');
+  const queryString = queryIndex >= 0 ? hash.slice(queryIndex + 1) : '';
+  return new URLSearchParams(queryString);
+}
+
 export default function Detail() {
   const [location, setLocation] = useLocation();
   const [item, setItem] = useState<RakScoutItem | null>(null);
@@ -15,41 +23,35 @@ export default function Detail() {
     const [path, queryString] = location.split('?');
     const hashParams = new URLSearchParams(queryString || '');
     const detailId = hashParams.get('id') || hashParams.get('detail');
-    
-    // window.location.search からも取得（直接アクセス・ブラウザバック時）
-    const searchParams = new URLSearchParams(window.location.search);
-    const searchId = searchParams.get('id') || searchParams.get('detail');
-    
-    const finalId = detailId || searchId;
-    
-    if (!finalId) {
+
+    if (!detailId) {
       setLocation('/');
       return;
     }
-    
+
     // 商品データ取得
     const itemStr = sessionStorage.getItem('rakScoutSelectedItem');
     if (itemStr) {
       try {
         const parsed = JSON.parse(itemStr);
-        if (parsed.id === finalId) {
+        if (parsed.id === detailId) {
           setItem(parsed);
         } else {
-          console.warn('商品ID不一致:', parsed.id, '!==', finalId);
+          console.warn('商品ID不一致:', parsed.id, '!==', detailId);
         }
       } catch (e) {
         console.error('パース失敗:', e);
       }
     }
-    
-    // 検索条件を保存（hashParamsとsearchParamsをマージ）
-    const merged = new URLSearchParams();
+
+    // 検索条件を保存（wouterのlocationからのみ取得）
+    const saved = new URLSearchParams();
     ['q', 'sort', 'furusato'].forEach(key => {
-      const val = hashParams.get(key) || searchParams.get(key);
-      if (val) merged.set(key, val);
+      const val = hashParams.get(key);
+      if (val) saved.set(key, val);
     });
-    
-    sessionStorage.setItem(STORAGE_KEY, merged.toString());
+
+    sessionStorage.setItem(STORAGE_KEY, saved.toString());
   }, [location, setLocation]);
 
   const handleToResults = () => {
@@ -87,7 +89,7 @@ export default function Detail() {
         <meta property="og:type" content="product" />
         <link rel="canonical" href={canonicalUrl} />
       </Helmet>
-      
+
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
@@ -124,10 +126,10 @@ export default function Detail() {
         <div className="flex-1 flex flex-col items-center">
           {/* レアカード外枠 */}
           <div className="w-full relative shadow-[0_30px_60px_rgba(0,0,0,0.12)] p-1 bg-[linear-gradient(135deg,#ffffff_0%,#e7e5e4_20%,#a8a29e_50%,#e7e5e4_80%,#ffffff_100%)]" style={{ clipPath: 'polygon(4% 0%, 96% 0%, 100% 100%, 0% 100%)' }}>
-            
+
             <div className="w-full pt-8 pb-10 px-6 bg-carbon relative" style={{ clipPath: 'polygon(4% 0%, 96% 0%, 100% 100%, 0% 100%)' }}>
               <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-black/20 pointer-events-none z-0"></div>
-              
+
               <div className="flex justify-between items-start mb-6 relative z-10">
                 <div className="flex-1 pr-4">
                   <h4 className="text-[10px] font-black text-stone-400 tracking-[0.4em] uppercase mb-1">Scouted Item</h4>
