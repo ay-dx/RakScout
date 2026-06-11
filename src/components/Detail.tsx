@@ -7,40 +7,49 @@ import MetricBar from './MetricBar';
 const STORAGE_KEY = 'rakScoutSearchParams';
 
 export default function Detail() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [item, setItem] = useState<RakScoutItem | null>(null);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    const [path, queryString] = hash.replace('#', '').split('?');
+    // wouterのlocationからパスとパラメータを取得（推奨）
+    const [path, queryString] = location.split('?');
     const params = new URLSearchParams(queryString || '');
     const detailId = params.get('id') || params.get('detail');
     
-    if (!detailId) {
+    // フォールバック：window.location.search（直接アクセス時）
+    const searchParams = new URLSearchParams(window.location.search);
+    const searchId = searchParams.get('id') || searchParams.get('detail');
+    
+    const finalId = detailId || searchId;
+    
+    if (!finalId) {
       setLocation('/');
       return;
     }
     
+    // 商品データ取得
     const itemStr = sessionStorage.getItem('rakScoutSelectedItem');
     if (itemStr) {
       try {
         const parsed = JSON.parse(itemStr);
-        if (parsed.id === detailId) {
+        if (parsed.id === finalId) {
           setItem(parsed);
+        } else {
+          console.warn('商品ID不一致:', parsed.id, '!==', finalId);
         }
       } catch (e) {
-        console.error(e);
+        console.error('パース失敗:', e);
       }
     }
     
-    const searchParams = new URLSearchParams(window.location.search);
+    // 検索条件保存（window.location.searchから）
     const saved = new URLSearchParams();
     if (searchParams.get('q')) saved.set('q', searchParams.get('q')!);
     if (searchParams.get('sort')) saved.set('sort', searchParams.get('sort')!);
     if (searchParams.get('furusato')) saved.set('furusato', searchParams.get('furusato')!);
     
     sessionStorage.setItem(STORAGE_KEY, saved.toString());
-  }, [setLocation]);
+  }, [location, setLocation]);
 
   const handleToResults = () => {
     const savedParams = sessionStorage.getItem(STORAGE_KEY);
