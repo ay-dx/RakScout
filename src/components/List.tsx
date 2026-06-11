@@ -33,19 +33,13 @@ export default function List() {
   const [sortKey, setSortKey] = useState<SortKey>('WAR');
 
   useEffect(() => {
-    // Detailページの残骸（?id=xxx）が残っている場合は除去
-    if (window.location.search.includes('id=') || window.location.search.includes('detail=')) {
-      const cleanUrl = window.location.pathname + window.location.hash;
-      window.history.replaceState(null, '', cleanUrl);
-    }
-
     const params = getHashParams();
 
     // URLに検索パラメータがない → sessionStorageから復元
     if (!params.has('q')) {
       const saved = sessionStorage.getItem(STORAGE_KEY);
       if (saved && saved.length > 0) {
-        window.location.hash = `#/list?${saved}`;
+        setLocation(`/list?${saved}`, { replace: true });
         return;
       }
     }
@@ -74,7 +68,7 @@ export default function List() {
     const params = getHashParams();
     params.set('sort', newSort);
     sessionStorage.setItem(STORAGE_KEY, params.toString());
-    window.location.hash = `#/list?${params.toString()}`;
+    setLocation(`/list?${params.toString()}`);
     setSortKey(newSort);
   };
 
@@ -94,8 +88,8 @@ export default function List() {
     // detailパラメータを追加
     hashParams.set('id', item.id);
 
-    // hash を直接書き換え（wouterのsetLocationの代わり）
-    window.location.hash = `#/detail?${hashParams.toString()}`;
+    // Detail へ遷移（検索条件付きURL）
+    setLocation(`/detail?${hashParams.toString()}`);
   };
 
   return (
@@ -103,7 +97,7 @@ export default function List() {
       <header className="p-5 bg-white/80 backdrop-blur-md border-b-2 border-stone-200 shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.06)] relative">
         <div className="flex items-center gap-3 mb-5">
           <button 
-            onClick={() => { window.location.hash = '#/'; }}
+            onClick={() => setLocation('/')} 
             className="p-3 bg-stone-100 rounded-full border border-stone-200 active:scale-90 transition-transform text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-400"
             aria-label="ホームに戻る"
           >
@@ -119,7 +113,7 @@ export default function List() {
               type="search" 
               value={keyword}
               readOnly
-              onClick={() => { window.location.hash = '#/'; }}
+              onClick={() => setLocation('/')}
               className="w-full pl-10 pr-4 py-3 bg-transparent text-lg font-black outline-none text-stone-800" 
             />
           </div>
