@@ -11,46 +11,35 @@ export default function Detail() {
   const [item, setItem] = useState<RakScoutItem | null>(null);
 
   useEffect(() => {
-    const fullUrl = new URL(window.location.href);
-    
-    // 検索条件を取得（?q=xxx&sort=WAR）
-    const q = fullUrl.searchParams.get('q');
-    const sort = fullUrl.searchParams.get('sort');
-    const furusato = fullUrl.searchParams.get('furusato');
-    
-    // detailIdを取得（#/detail?id=xxx）
     const hash = window.location.hash;
-    const hashParams = new URLSearchParams(hash.split('?')[1] || '');
-    const detailId = hashParams.get('id') || hashParams.get('detail');
+    const [path, queryString] = hash.replace('#', '').split('?');
+    const params = new URLSearchParams(queryString || '');
+    const detailId = params.get('id') || params.get('detail');
     
     if (!detailId) {
       setLocation('/');
       return;
     }
     
-    // 商品データ取得
     const itemStr = sessionStorage.getItem('rakScoutSelectedItem');
     if (itemStr) {
       try {
         const parsed = JSON.parse(itemStr);
         if (parsed.id === detailId) {
           setItem(parsed);
-        } else {
-          console.warn('商品ID不一致:', parsed.id, '!==', detailId);
         }
       } catch (e) {
-        console.error('パース失敗:', e);
+        console.error(e);
       }
     }
     
-    // 検索条件を保存（空でない場合のみ）
-    const savedParams = new URLSearchParams();
-    if (q) savedParams.set('q', q);
-    if (sort) savedParams.set('sort', sort);
-    if (furusato) savedParams.set('furusato', furusato);
+    const searchParams = new URLSearchParams(window.location.search);
+    const saved = new URLSearchParams();
+    if (searchParams.get('q')) saved.set('q', searchParams.get('q')!);
+    if (searchParams.get('sort')) saved.set('sort', searchParams.get('sort')!);
+    if (searchParams.get('furusato')) saved.set('furusato', searchParams.get('furusato')!);
     
-    const savedString = savedParams.toString();
-    sessionStorage.setItem(STORAGE_KEY, savedString);
+    sessionStorage.setItem(STORAGE_KEY, saved.toString());
   }, [setLocation]);
 
   const handleToResults = () => {
@@ -90,7 +79,6 @@ export default function Detail() {
         <link rel="canonical" href={canonicalUrl} />
       </Helmet>
       
-      {/* 構造化データ */}
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
@@ -112,7 +100,6 @@ export default function Detail() {
       </script>
 
       <div className="flex flex-col h-full bg-cream p-5 overflow-y-auto">
-        {/* 他の商品を見るボタン */}
         <button 
           onClick={handleToResults}
           className="flex items-center gap-2 w-fit mb-5 px-4 py-3 bg-white/80 backdrop-blur rounded-full border border-stone-200 active:scale-90 z-20 shadow-lg shrink-0 text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-400"
@@ -125,7 +112,6 @@ export default function Detail() {
         </button>
 
         <div className="flex-1 flex flex-col items-center">
-          {/* レアカード外枠 */}
           <div className="w-full relative shadow-[0_30px_60px_rgba(0,0,0,0.12)] p-1 bg-[linear-gradient(135deg,#ffffff_0%,#e7e5e4_20%,#a8a29e_50%,#e7e5e4_80%,#ffffff_100%)]" style={{ clipPath: 'polygon(4% 0%, 96% 0%, 100% 100%, 0% 100%)' }}>
             
             <div className="w-full pt-8 pb-10 px-6 bg-carbon relative" style={{ clipPath: 'polygon(4% 0%, 96% 0%, 100% 100%, 0% 100%)' }}>
@@ -150,14 +136,12 @@ export default function Detail() {
                 <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-xl" />
               </div>
 
-              {/* 指標バー */}
               <div className="space-y-4 mb-10 relative z-10">
                 <MetricBar label="WAR" value={item.metrics.WAR.value} pct={item.metrics.WAR.pct} colorClass="bg-gradient-to-r from-red-900 to-red-500" />
                 <MetricBar label="ISO" value={item.metrics.ISO.value} pct={item.metrics.ISO.pct} colorClass="bg-gradient-to-r from-blue-900 to-blue-500" />
                 <MetricBar label="FIP" value={item.metrics.FIP.value} pct={item.metrics.FIP.pct} colorClass="bg-gradient-to-r from-green-900 to-green-500" />
               </div>
 
-              {/* スカウティングレポート */}
               <div className="relative mb-10 z-10">
                 <div className="flex items-center gap-2 mb-2 ml-1">
                   <div className="w-1.5 h-4 bg-stone-400"></div>
