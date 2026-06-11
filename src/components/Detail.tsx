@@ -1,31 +1,21 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { RakScoutItem } from '../types';
 import MetricBar from './MetricBar';
 
 const STORAGE_KEY = 'rakScoutSearchParams';
 
-// ハッシュルーティング用：URLSearchParamsを取得
-function getHashParams(): URLSearchParams {
-  const hash = window.location.hash;
-  const queryIndex = hash.indexOf('?');
-  const queryString = queryIndex >= 0 ? hash.slice(queryIndex + 1) : '';
-  return new URLSearchParams(queryString);
-}
-
 export default function Detail() {
-  const [location, setLocation] = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [item, setItem] = useState<RakScoutItem | null>(null);
 
   useEffect(() => {
-    // wouterのlocationからパスとパラメータを取得
-    const [path, queryString] = location.split('?');
-    const hashParams = new URLSearchParams(queryString || '');
-    const detailId = hashParams.get('id') || hashParams.get('detail');
+    const detailId = searchParams.get('id') || searchParams.get('detail');
 
     if (!detailId) {
-      setLocation('/');
+      navigate('/');
       return;
     }
 
@@ -44,22 +34,22 @@ export default function Detail() {
       }
     }
 
-    // 検索条件を保存（wouterのlocationからのみ取得）
+    // 検索条件を保存（id/detail を除く）
     const saved = new URLSearchParams();
-    ['q', 'sort', 'furusato'].forEach(key => {
-      const val = hashParams.get(key);
-      if (val) saved.set(key, val);
+    searchParams.forEach((val, key) => {
+      if (key !== 'id' && key !== 'detail') {
+        saved.set(key, val);
+      }
     });
-
     sessionStorage.setItem(STORAGE_KEY, saved.toString());
-  }, [location, setLocation]);
+  }, [searchParams, navigate]);
 
   const handleToResults = () => {
     const savedParams = sessionStorage.getItem(STORAGE_KEY);
     const query = savedParams && savedParams.length > 0 
       ? `?${savedParams}` 
       : '';
-    setLocation(`/list${query}`);
+    navigate(`/list${query}`);
   };
 
   if (!item) {

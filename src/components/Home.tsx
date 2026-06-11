@@ -1,11 +1,11 @@
 import { useState, useId } from 'react';
-import { useLocation } from 'wouter';
+import { useNavigate } from 'react-router-dom';
 import Footer from './Footer';
 
 const STORAGE_KEY = 'rakScoutSearchParams';
 
 export default function Home() {
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const [keyword, setKeyword] = useState('');
   const [isFurusato, setIsFurusato] = useState(false);
   const searchInputId = useId();
@@ -17,13 +17,7 @@ export default function Home() {
     if (isFurusato) params.set('furusato', '1');
     params.set('sort', 'WAR');
     sessionStorage.setItem(STORAGE_KEY, params.toString());
-
-    // search パラメータをクリアしてから遷移（ハッシュルーティング用）
-    if (window.location.search) {
-      window.history.replaceState(null, '', window.location.pathname);
-    }
-
-    setLocation(`/list?${params.toString()}`);
+    navigate(`/list?${params.toString()}`);
   };
 
   const setSampleKeyword = (sample: string) => {
@@ -39,7 +33,6 @@ export default function Home() {
           RakScout
         </header>
 
-        {/* ファーストビュー */}
         <section className="mt-6 text-center">
           <h1 className="sr-only">楽天市場のお宝商品＆ふるさと納税を一括検索 | RakScout</h1>
           <h2 className="text-6xl font-black italic leading-[0.85] tracking-tighter text-stone-800 drop-shadow-[0_4px_12px_rgba(0,0,0,0.08)]" aria-hidden="true">
@@ -52,7 +45,6 @@ export default function Home() {
           </p>
         </section>
 
-        {/* 3指標カード */}
         <div className="grid grid-cols-3 gap-3 mt-6 px-1">
           <div className="bg-white/60 backdrop-blur border border-stone-200 rounded-2xl p-3 text-center">
             <div className="text-xl mb-1">🏆</div>
@@ -71,7 +63,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 検索前価値提示 */}
         <section className="mt-6 mb-2">
           <h2 className="sr-only">RakScoutの特徴</h2>
           <div className="space-y-2">
@@ -90,7 +81,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 検索フォーム */}
         <section className="mt-auto mb-[2vh]">
           <h2 className="sr-only">商品検索フォーム</h2>
 
@@ -137,7 +127,6 @@ export default function Home() {
             検索を開始する
           </button>
 
-          {/* サンプルキーワード */}
           <div className="mt-4">
             <h3 className="text-[10px] font-black text-stone-400 tracking-widest uppercase mb-2">おすすめ検索</h3>
             <div className="flex flex-wrap gap-2">
@@ -153,7 +142,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ふるさと納税モード時のヒント */}
           {isFurusato && (
             <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
               <p className="text-[11px] text-amber-800 font-bold leading-relaxed">
@@ -162,7 +150,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* 空検索時のメッセージ */}
           {!keyword.trim() && (
             <p className="mt-3 text-center text-[11px] text-stone-400">
               キーワードを入力して検索を開始してください

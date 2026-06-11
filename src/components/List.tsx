@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useId } from 'react';
-import { useLocation } from 'wouter';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useScoutSearch } from '../hooks/useScoutSearch';
 import { RakScoutItem } from '../types';
 
@@ -7,25 +7,9 @@ type SortKey = 'WAR' | 'ISO' | 'FIP';
 
 const STORAGE_KEY = 'rakScoutSearchParams';
 
-// ハッシュルーティング用：URLSearchParamsを取得（search と hash の両方をマージ）
-function getHashParams(): URLSearchParams {
-  const hash = window.location.hash;
-  const queryIndex = hash.indexOf('?');
-  const hashQuery = queryIndex >= 0 ? hash.slice(queryIndex + 1) : '';
-
-  const search = window.location.search;
-  const searchQuery = search.startsWith('?') ? search.slice(1) : '';
-
-  // search をベースに、hash で上書き（hash を優先）
-  const merged = new URLSearchParams(searchQuery);
-  const hashParams = new URLSearchParams(hashQuery);
-  hashParams.forEach((val, key) => merged.set(key, val));
-
-  return merged;
-}
-
 export default function List() {
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const searchInputId = useId();
 
   const [keyword, setKeyword] = useState('');
@@ -33,24 +17,24 @@ export default function List() {
   const [sortKey, setSortKey] = useState<SortKey>('WAR');
 
   useEffect(() => {
-    const params = getHashParams();
+    const q = searchParams.get('q');
 
     // URLに検索パラメータがない → sessionStorageから復元
-    if (!params.has('q')) {
+    if (!q) {
       const saved = sessionStorage.getItem(STORAGE_KEY);
       if (saved && saved.length > 0) {
-        setLocation(`/list?${saved}`, { replace: true });
+        setSearchParams(new URLSearchParams(saved), { replace: true });
         return;
       }
     }
 
-    setKeyword(params.get('q') || '');
-    setIsFurusato(params.get('furusato') === '1');
-    const sort = params.get('sort') as SortKey;
+    setKeyword(q || '');
+    setIsFurusato(searchParams.get('furusato') === '1');
+    const sort = searchParams.get('sort') as SortKey;
     if (sort && ['WAR', 'ISO', 'FIP'].includes(sort)) {
       setSortKey(sort);
     }
-  }, []);
+  }, [searchParams, setSearchParams]);
 
   const { data: apiData, isLoading, error } = useScoutSearch(keyword, isFurusato);
 
@@ -65,10 +49,10 @@ export default function List() {
   }, [apiData, sortKey]);
 
   const handleSortChange = (newSort: SortKey) => {
-    const params = getHashParams();
-    params.set('sort', newSort);
-    sessionStorage.setItem(STORAGE_KEY, params.toString());
-    setLocation(`/list?${params.toString()}`);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('sort', newSort);
+    sessionStorage.setItem(STORAGE_KEY, newParams.toString());
+    setSearchParams(newParams);
     setSortKey(newSort);
   };
 
@@ -76,20 +60,12 @@ export default function List() {
     // 商品データを保存
     sessionStorage.setItem('rakScoutSelectedItem', JSON.stringify(item));
 
-    // 現在の検索条件を取得
-    const currentParams = getHashParams();
-    const hashParams = new URLSearchParams();
+    // 現在の検索条件に id を追加
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('id', item.id);
 
-    // 検索条件を引き継ぐ
-    if (currentParams.get('q')) hashParams.set('q', currentParams.get('q')!);
-    if (currentParams.get('sort')) hashParams.set('sort', currentParams.get('sort')!);
-    if (currentParams.get('furusato')) hashParams.set('furusato', currentParams.get('furusato')!);
-
-    // detailパラメータを追加
-    hashParams.set('id', item.id);
-
-    // Detail へ遷移（検索条件付きURL）
-    setLocation(`/detail?${hashParams.toString()}`);
+    // Detail へ遷移
+    navigate(`/detail?${newParams.toString()}`);
   };
 
   return (
@@ -97,7 +73,7 @@ export default function List() {
       <header className="p-5 bg-white/80 backdrop-blur-md border-b-2 border-stone-200 shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.06)] relative">
         <div className="flex items-center gap-3 mb-5">
           <button 
-            onClick={() => setLocation('/')} 
+            onClick={() => navigate('/')} 
             className="p-3 bg-stone-100 rounded-full border border-stone-200 active:scale-90 transition-transform text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-400"
             aria-label="ホームに戻る"
           >
@@ -113,7 +89,7 @@ export default function List() {
               type="search" 
               value={keyword}
               readOnly
-              onClick={() => setLocation('/')}
+              onClick={() => navigate('/')}
               className="w-full pl-10 pr-4 py-3 bg-transparent text-lg font-black outline-none text-stone-800" 
             />
           </div>
