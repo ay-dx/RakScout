@@ -51,17 +51,17 @@ export default function Home() {
           <div className="bg-white/60 backdrop-blur border border-stone-200 rounded-2xl p-3 text-center">
             <div className="text-xl mb-1">⚾</div>
             <div className="text-[10px] font-black text-red-500 tracking-wider">WAR</div>
-            <div className="text-[9px] text-stone-500 mt-0.5 leading-tight">総合<br/>勝利貢献度</div>
+            <div className="text-[9px] text-stone-500 mt-0.5 leading-tight">総合<br/>勝利価値</div>
           </div>
           <div className="bg-white/60 backdrop-blur border border-stone-200 rounded-2xl p-3 text-center">
-            <div className="text-xl mb-1">💥</div>
+            <div className="text-xl mb-1">🚀</div>
             <div className="text-[10px] font-black text-blue-500 tracking-wider">ISO</div>
-            <div className="text-[9px] text-stone-500 mt-0.5 leading-tight">純粋<br/>還元力</div>
+            <div className="text-[9px] text-stone-500 mt-0.5 leading-tight">純粋<br/>長打力</div>
           </div>
           <div className="bg-white/60 backdrop-blur border border-stone-200 rounded-2xl p-3 text-center">
-            <div className="text-xl mb-1">🛡️</div>
+            <div className="text-xl mb-1">🎯</div>
             <div className="text-[10px] font-black text-green-500 tracking-wider">FIP</div>
-            <div className="text-[9px] text-stone-500 mt-0.5 leading-tight">独立<br/>評価指標</div>
+            <div className="text-[9px] text-stone-500 mt-0.5 leading-tight">守備<br/>非依存評価</div>
           </div>
         </div>
 
