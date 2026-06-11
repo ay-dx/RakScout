@@ -11,12 +11,12 @@ export default function Detail() {
   const [item, setItem] = useState<RakScoutItem | null>(null);
 
   useEffect(() => {
-    // wouterのlocationからパスとパラメータを取得（推奨）
+    // wouterのlocationからパスとパラメータを取得
     const [path, queryString] = location.split('?');
-    const params = new URLSearchParams(queryString || '');
-    const detailId = params.get('id') || params.get('detail');
+    const hashParams = new URLSearchParams(queryString || '');
+    const detailId = hashParams.get('id') || hashParams.get('detail');
     
-    // フォールバック：window.location.search（直接アクセス時）
+    // window.location.search からも取得（直接アクセス・ブラウザバック時）
     const searchParams = new URLSearchParams(window.location.search);
     const searchId = searchParams.get('id') || searchParams.get('detail');
     
@@ -42,22 +42,22 @@ export default function Detail() {
       }
     }
     
-    // 検索条件保存（window.location.searchから）
-    const saved = new URLSearchParams();
-    if (searchParams.get('q')) saved.set('q', searchParams.get('q')!);
-    if (searchParams.get('sort')) saved.set('sort', searchParams.get('sort')!);
-    if (searchParams.get('furusato')) saved.set('furusato', searchParams.get('furusato')!);
+    // 検索条件を保存（hashParamsとsearchParamsをマージ）
+    const merged = new URLSearchParams();
+    ['q', 'sort', 'furusato'].forEach(key => {
+      const val = hashParams.get(key) || searchParams.get(key);
+      if (val) merged.set(key, val);
+    });
     
-    sessionStorage.setItem(STORAGE_KEY, saved.toString());
+    sessionStorage.setItem(STORAGE_KEY, merged.toString());
   }, [location, setLocation]);
 
   const handleToResults = () => {
     const savedParams = sessionStorage.getItem(STORAGE_KEY);
-    if (savedParams && savedParams.length > 0) {
-      setLocation(`/list?${savedParams}`);
-    } else {
-      setLocation('/');
-    }
+    const query = savedParams && savedParams.length > 0 
+      ? `?${savedParams}` 
+      : '';
+    setLocation(`/list${query}`);
   };
 
   if (!item) {
@@ -109,6 +109,7 @@ export default function Detail() {
       </script>
 
       <div className="flex flex-col h-full bg-cream p-5 overflow-y-auto">
+        {/* 上部：他の商品を見る */}
         <button 
           onClick={handleToResults}
           className="flex items-center gap-2 w-fit mb-5 px-4 py-3 bg-white/80 backdrop-blur rounded-full border border-stone-200 active:scale-90 z-20 shadow-lg shrink-0 text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-400"
@@ -121,6 +122,7 @@ export default function Detail() {
         </button>
 
         <div className="flex-1 flex flex-col items-center">
+          {/* レアカード外枠 */}
           <div className="w-full relative shadow-[0_30px_60px_rgba(0,0,0,0.12)] p-1 bg-[linear-gradient(135deg,#ffffff_0%,#e7e5e4_20%,#a8a29e_50%,#e7e5e4_80%,#ffffff_100%)]" style={{ clipPath: 'polygon(4% 0%, 96% 0%, 100% 100%, 0% 100%)' }}>
             
             <div className="w-full pt-8 pb-10 px-6 bg-carbon relative" style={{ clipPath: 'polygon(4% 0%, 96% 0%, 100% 100%, 0% 100%)' }}>
@@ -145,12 +147,14 @@ export default function Detail() {
                 <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-xl" />
               </div>
 
+              {/* 指標バー */}
               <div className="space-y-4 mb-10 relative z-10">
                 <MetricBar label="WAR" value={item.metrics.WAR.value} pct={item.metrics.WAR.pct} colorClass="bg-gradient-to-r from-red-900 to-red-500" />
                 <MetricBar label="ISO" value={item.metrics.ISO.value} pct={item.metrics.ISO.pct} colorClass="bg-gradient-to-r from-blue-900 to-blue-500" />
                 <MetricBar label="FIP" value={item.metrics.FIP.value} pct={item.metrics.FIP.pct} colorClass="bg-gradient-to-r from-green-900 to-green-500" />
               </div>
 
+              {/* スカウティングレポート */}
               <div className="relative mb-10 z-10">
                 <div className="flex items-center gap-2 mb-2 ml-1">
                   <div className="w-1.5 h-4 bg-stone-400"></div>
@@ -163,6 +167,7 @@ export default function Detail() {
                 </div>
               </div>
 
+              {/* アフィリエイトリンク */}
               <a 
                 href={item.affiliateUrl}
                 target="_blank"
@@ -171,6 +176,15 @@ export default function Detail() {
               >
                 今すぐチェック！
               </a>
+
+              {/* 下部：検索結果に戻る */}
+              <button 
+                onClick={handleToResults}
+                className="mt-4 w-full py-4 bg-white/10 backdrop-blur border border-stone-600 rounded-md text-stone-300 font-black text-lg tracking-wider text-center active:scale-[0.98] transition-transform focus:outline-none focus:ring-2 focus:ring-stone-400"
+                aria-label="検索結果に戻る"
+              >
+                ← 検索結果に戻る
+              </button>
             </div>
           </div>
         </div>
