@@ -11,18 +11,18 @@ export default function Detail() {
   const [item, setItem] = useState<RakScoutItem | null>(null);
 
   useEffect(() => {
+    const fullUrl = new URL(window.location.href);
+    
     // 検索条件を取得（?q=xxx&sort=WAR）
-    const searchParams = new URLSearchParams(window.location.search);
-    const q = searchParams.get('q');
-    const sort = searchParams.get('sort');
-    const furusato = searchParams.get('furusato');
+    const q = fullUrl.searchParams.get('q');
+    const sort = fullUrl.searchParams.get('sort');
+    const furusato = fullUrl.searchParams.get('furusato');
     
     // detailIdを取得（#/detail?id=xxx）
     const hash = window.location.hash;
     const hashParams = new URLSearchParams(hash.split('?')[1] || '');
     const detailId = hashParams.get('id') || hashParams.get('detail');
     
-    // detailIdがない → ホームに戻る
     if (!detailId) {
       setLocation('/');
       return;
@@ -43,17 +43,19 @@ export default function Detail() {
       }
     }
     
-    // 検索条件を保存
+    // 検索条件を保存（空でない場合のみ）
     const savedParams = new URLSearchParams();
     if (q) savedParams.set('q', q);
     if (sort) savedParams.set('sort', sort);
     if (furusato) savedParams.set('furusato', furusato);
-    sessionStorage.setItem(STORAGE_KEY, savedParams.toString());
+    
+    const savedString = savedParams.toString();
+    sessionStorage.setItem(STORAGE_KEY, savedString);
   }, [setLocation]);
 
   const handleToResults = () => {
     const savedParams = sessionStorage.getItem(STORAGE_KEY);
-    if (savedParams) {
+    if (savedParams && savedParams.length > 0) {
       setLocation(`/list?${savedParams}`);
     } else {
       setLocation('/');
