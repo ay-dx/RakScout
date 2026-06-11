@@ -1,13 +1,13 @@
 import { Router, Route, Switch } from 'wouter';
-import { useHashLocation } from 'wouter/use-hash-location';
+import { customUseHashLocation } from './hooks/customUseHashLocation';
 import Home from './components/Home';
 import List from './components/List';
 import Detail from './components/Detail';
 
 export default function App() {
   return (
-    // GitHub Pages向けのハッシュルーターを適用
-    <Router hook={useHashLocation}>
+    // カスタムハッシュルーターを適用（search の影響を排除）
+    <Router hook={customUseHashLocation}>
       <div className="w-full max-w-[480px] h-[100dvh] mx-auto bg-cream relative overflow-hidden shadow-2xl flex flex-col">
         <Switch>
           <Route path="/" component={Home} />
