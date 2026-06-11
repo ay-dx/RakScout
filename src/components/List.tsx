@@ -7,12 +7,21 @@ type SortKey = 'WAR' | 'ISO' | 'FIP';
 
 const STORAGE_KEY = 'rakScoutSearchParams';
 
-// ハッシュルーティング用：URLSearchParamsを取得
+// ハッシュルーティング用：URLSearchParamsを取得（search と hash の両方をマージ）
 function getHashParams(): URLSearchParams {
   const hash = window.location.hash;
   const queryIndex = hash.indexOf('?');
-  const queryString = queryIndex >= 0 ? hash.slice(queryIndex + 1) : '';
-  return new URLSearchParams(queryString);
+  const hashQuery = queryIndex >= 0 ? hash.slice(queryIndex + 1) : '';
+
+  const search = window.location.search;
+  const searchQuery = search.startsWith('?') ? search.slice(1) : '';
+
+  // search をベースに、hash で上書き（hash を優先）
+  const merged = new URLSearchParams(searchQuery);
+  const hashParams = new URLSearchParams(hashQuery);
+  hashParams.forEach((val, key) => merged.set(key, val));
+
+  return merged;
 }
 
 export default function List() {
