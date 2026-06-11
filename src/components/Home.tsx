@@ -49,7 +49,7 @@ export default function Home() {
         {/* 3指標カード */}
         <div className="grid grid-cols-3 gap-3 mt-6 px-1">
           <div className="bg-white/60 backdrop-blur border border-stone-200 rounded-2xl p-3 text-center">
-            <div className="text-xl mb-1">⚾</div>
+            <div className="text-xl mb-1">🏆</div>
             <div className="text-[10px] font-black text-red-500 tracking-wider">WAR</div>
             <div className="text-[9px] text-stone-500 mt-0.5 leading-tight">総合<br/>勝利価値</div>
           </div>
