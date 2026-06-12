@@ -125,8 +125,8 @@ export default function Home() {
             </h3>
             <div className="flex flex-wrap gap-2">
               {(isFurusato
-                ? ['米 20kg', 'ハンバーグ', '黒毛和牛', 'りんご', '北海道 蟹']
-                : ['黒毛和牛', '北海道 蟹', '米 20kg', 'ハンバーグ', 'りんご']
+                ? ['アイス', 'ジェラート', '冷麺', '米 20kg', 'りんご']
+                : ['ネッククーラー', '水冷ベスト', '避暑着', '酸辣湯麺', 'アイス梅']
               ).map((sample) => (
                 <button
                   key={sample}
