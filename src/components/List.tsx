@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useId } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useScoutSearch } from '../hooks/useScoutSearch';
 import { RakScoutItem } from '../types';
 
@@ -73,7 +74,12 @@ export default function List() {
   };
 
   return (
-    <div className="flex flex-col bg-cream">
+    <>
+      <Helmet>
+        <title>検索結果 - RakScout</title>
+        <meta name="description" content="楽天市場とふるさと納税の検索結果。WAR・ISO・FIPの独自指標でコスパ最強の商品を発見。" />
+      </Helmet>
+      <div className="flex flex-col bg-cream">
       <header className="p-5 bg-white/80 backdrop-blur-md border-b-2 border-stone-200 shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.06)] relative">
         <div className="flex items-center gap-3 mb-5">
           <button 
@@ -175,5 +181,6 @@ export default function List() {
         ))}
       </div>
     </div>
+    </>
   );
 }
