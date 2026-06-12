@@ -73,7 +73,7 @@ export default function List() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-cream">
+    <div className="flex flex-col bg-cream">
       <header className="p-5 bg-white/80 backdrop-blur-md border-b-2 border-stone-200 shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.06)] relative">
         <div className="flex items-center gap-3 mb-5">
           <button 

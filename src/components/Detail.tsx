@@ -100,7 +100,7 @@ export default function Detail() {
         })}
       </script>
 
-      <div className="flex flex-col h-full bg-cream p-5 overflow-y-auto">
+      <div className="flex flex-col bg-cream p-5 overflow-y-auto">
         {/* 上部：他の商品を見る */}
         <button 
           onClick={handleToResults}
