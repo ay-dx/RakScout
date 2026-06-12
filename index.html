@@ -23,6 +23,43 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+    <!-- WebApplication 構造化データ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "ラクスカウト（RakScout）",
+      "url": "https://ay-dx.github.io/RakScout/",
+      "description": "楽天市場とふるさと納税から本当にお得な商品を発見する検索ツール。WAR・ISO・FIPの独自スコアでコスパ最強商品を発掘。",
+      "applicationCategory": "ShoppingApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "JPY"
+      },
+      "inLanguage": "ja"
+    }
+    </script>
+
+    <!-- WebSite + SearchAction 構造化データ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "url": "https://ay-dx.github.io/RakScout/",
+      "name": "ラクスカウト（RakScout）",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://ay-dx.github.io/RakScout/#/list?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
   </head>
   <body>
     <div id="root">
