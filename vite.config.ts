@@ -5,4 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/RakScout/', // GitHub Pages 用のベースパスを設定
+  build: {
+    sourcemap: false, // ソースマップを出力しない（セキュリティ）
+  },
 })
