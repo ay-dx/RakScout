@@ -14,12 +14,6 @@ export default function Footer() {
           ホーム
         </button>
         <button
-          onClick={() => navigate('/list')}
-          className="text-[11px] font-bold text-stone-500 hover:text-stone-800 transition-colors focus:outline-none"
-        >
-          検索結果
-        </button>
-        <button
           onClick={() => navigate('/metrics')}
           className="text-[11px] font-bold text-stone-500 hover:text-stone-800 transition-colors focus:outline-none"
         >
