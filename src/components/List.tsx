@@ -54,9 +54,11 @@ export default function List() {
   }, [apiData, sortKey]);
 
   const handleSortChange = (newSort: SortKey) => {
-    if (typeof window.gtag === 'function') {
-      window.gtag('event', 'sort_change', { sort_type: newSort });
-    }
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'sort_change',
+      sort_type: newSort,
+    });
     const newParams = new URLSearchParams(searchParams);
     newParams.set('sort', newSort);
     sessionStorage.setItem(STORAGE_KEY, newParams.toString());
@@ -65,15 +67,15 @@ export default function List() {
   };
 
   const handleCardClick = (item: RakScoutItem) => {
-    if (typeof window.gtag === 'function') {
-      window.gtag('event', 'select_item', {
-        item_name: item.name,
-        price: item.price,
-        metric_war: item.metrics.WAR.value,
-        metric_iso: item.metrics.ISO.value,
-        metric_fip: item.metrics.FIP.value,
-      });
-    }
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'select_item',
+      item_name: item.name,
+      price: item.price,
+      metric_war: item.metrics.WAR.value,
+      metric_iso: item.metrics.ISO.value,
+      metric_fip: item.metrics.FIP.value,
+    });
     // 商品データを保存
     sessionStorage.setItem('rakScoutSelectedItem', JSON.stringify(item));
 

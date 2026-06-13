@@ -165,16 +165,16 @@ export default function Detail() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => {
-                  if (typeof window.gtag === 'function') {
-                    window.gtag('event', 'conversion', {
-                      item_name: item.name,
-                      value: item.price,
-                      currency: 'JPY',
-                      metric_war: item.metrics.WAR.value,
-                      metric_iso: item.metrics.ISO.value,
-                      metric_fip: item.metrics.FIP.value,
-                    });
-                  }
+                  window.dataLayer = window.dataLayer || [];
+                  window.dataLayer.push({
+                    event: 'conversion',
+                    item_name: item.name,
+                    value: item.price,
+                    currency: 'JPY',
+                    metric_war: item.metrics.WAR.value,
+                    metric_iso: item.metrics.ISO.value,
+                    metric_fip: item.metrics.FIP.value,
+                  });
                 }}
                 className="block w-full py-5 rounded-md text-white font-black italic text-2xl tracking-tighter text-center transition-all z-10 relative bg-gradient-to-b from-orange-500 to-red-600 shadow-[0_6px_0_#991b1b,0_10px_20px_rgba(0,0,0,0.5)] active:translate-y-[6px] active:shadow-[0_0px_0_#991b1b,0_4px_6px_rgba(0,0,0,0.5)] focus:outline-none focus:ring-4 focus:ring-orange-400"
               >
