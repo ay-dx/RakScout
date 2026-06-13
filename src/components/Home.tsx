@@ -11,6 +11,12 @@ export default function Home() {
 
   const handleSearch = () => {
     if (!keyword.trim()) return;
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'search', {
+        search_term: keyword,
+        search_mode: isFurusato ? 'furusato' : 'normal',
+      });
+    }
     const params = new URLSearchParams();
     params.set('q', keyword);
     if (isFurusato) params.set('furusato', '1');
@@ -103,14 +109,24 @@ export default function Home() {
                 className={`absolute top-1 left-1 w-[calc(50%-4px)] h-[calc(100%-8px)] bg-gradient-to-br from-stone-200 to-stone-300 rounded-xl transition-transform duration-300 shadow-sm ${isFurusato ? 'translate-x-full' : ''}`} 
               />
               <button 
-                onClick={() => setIsFurusato(false)} 
+                onClick={() => {
+                setIsFurusato(false);
+                if (typeof window.gtag === 'function') {
+                  window.gtag('event', 'tab_click', { tab_name: 'normal' });
+                }
+              }} 
                 className={`flex-1 z-10 font-black italic text-[13px] tracking-widest transition-colors duration-300 ${!isFurusato ? 'text-stone-700' : 'text-stone-400'}`}
                 aria-pressed={!isFurusato}
               >
                 通常検索
               </button>
               <button 
-                onClick={() => setIsFurusato(true)} 
+                onClick={() => {
+                setIsFurusato(true);
+                if (typeof window.gtag === 'function') {
+                  window.gtag('event', 'tab_click', { tab_name: 'furusato' });
+                }
+              }} 
                 className={`flex-1 z-10 font-black italic text-[13px] tracking-widest transition-colors duration-300 ${isFurusato ? 'text-stone-700' : 'text-stone-400'}`}
                 aria-pressed={isFurusato}
               >
@@ -132,6 +148,12 @@ export default function Home() {
                   key={sample}
                   onClick={() => {
                     setSampleKeyword(sample);
+                    if (typeof window.gtag === 'function') {
+                      window.gtag('event', 'select_keyword', {
+                        keyword: sample,
+                        search_mode: isFurusato ? 'furusato' : 'normal',
+                      });
+                    }
                     const params = new URLSearchParams();
                     params.set('q', sample);
                     if (isFurusato) params.set('furusato', '1');
